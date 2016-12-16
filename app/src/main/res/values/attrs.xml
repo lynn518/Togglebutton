@@ -3,5 +3,6 @@
     <declare-styleable name="ToggleButton">
         <attr name="onColor" format="color|reference"/>
         <attr name="offColor" format="color|reference"/>
+        <attr name="padding" format="dimension|reference"/>
     </declare-styleable>
 </resources>

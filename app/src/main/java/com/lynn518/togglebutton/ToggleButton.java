@@ -14,29 +14,20 @@ import android.widget.CompoundButton;
 
 
 /**
- *
+ * Created by ZL on 16/1/14.
  * 自定义控件 : 开关
  */
 public class ToggleButton extends CompoundButton {
     private static final String TAG = "ToggleButton";
-    //背景画笔(画下面的背景)
     private Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    //开关画笔(画上面的小圆)
     private Paint togglePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    //背景路径
     private Path backgroundPath = new Path();
-    //打开时上面圆的路径
     private Path togglePath_on = new Path();
-    //关闭时上面圆的路径
     private Path togglePath_off = new Path();
-    //上面圆和底部背景之间的间距
-    private float padding =1;
-    //onDraw时的路径
+    private float padding;
     private Path toggleDrawPath = new Path();
-    //打开的颜色
-    private int onColor;
-    //关闭的颜色
-    private int offColor;
+    private int color_on;
+    private int color_off;
 
     public ToggleButton(Context context) {
         this(context, null);
@@ -46,18 +37,6 @@ public class ToggleButton extends CompoundButton {
         this(context, attrs, 0);
     }
 
-    public void setOffColor(int offColor) {
-        this.offColor = offColor;
-    }
-
-    public void setOnColor(int onColor) {
-        this.onColor = onColor;
-    }
-
-    public void setPadding(int padding) {
-        this.padding = padding;
-    }
-
     public ToggleButton(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         this.setClickable(true);
@@ -65,28 +44,32 @@ public class ToggleButton extends CompoundButton {
         initPaints();
     }
 
-    /**
-     * 初始化画笔
-     */
+    public void setColor_off(int color_off) {
+        this.color_off = color_off;
+    }
+
+    public void setColor_on(int color_on) {
+        this.color_on = color_on;
+    }
+
+    public void setPadding(int padding) {
+        this.padding = padding;
+    }
+
     private void initPaints() {
+        int color = isChecked() ? color_on : color_off;
+        backgroundPaint.setColor(color);
         togglePaint.setColor(Color.WHITE);
     }
 
-    /**
-     * 初始化attrs
-     * @param attrs
-     */
-    private void initAttrs(AttributeSet attrs){
+    private void initAttrs(AttributeSet attrs) {
         TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.ToggleButton);
-        onColor = a.getColor(R.styleable.ToggleButton_onColor,Color.GREEN);
-        offColor = a.getColor(R.styleable.ToggleButton_offColor, Color.LTGRAY);
+        color_on = a.getColor(R.styleable.ToggleButton_onColor, Color.GREEN);
+        color_off = a.getColor(R.styleable.ToggleButton_offColor, Color.LTGRAY);
+        padding = a.getDimension(R.styleable.ToggleButton_padding, 1);
         a.recycle();
     }
 
-
-    /**
-     * 初始化Paths
-     */
     private void initPath() {
         int height = getHeight();
         int width = getWidth();
@@ -105,7 +88,7 @@ public class ToggleButton extends CompoundButton {
             RectF off = new RectF(padding, padding, 2 * radius - padding, 2 * radius - padding);
             togglePath_on.addArc(on, 90, 360);
             togglePath_off.addArc(off, 90, 360);
-            toggleDrawPath.set(isChecked()?togglePath_on : togglePath_off);
+            toggleDrawPath.set(isChecked() ? togglePath_on : togglePath_off);
         }
 
     }
@@ -113,41 +96,43 @@ public class ToggleButton extends CompoundButton {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        backgroundPaint.setColor(isChecked() ? onColor : offColor);
         canvas.drawPath(backgroundPath, backgroundPaint);
         canvas.drawPath(toggleDrawPath, togglePaint);
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-
-        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
-        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
-
+        final int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        final int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        if(widthMode != MeasureSpec.EXACTLY){
-            widthSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 50, displayMetrics);
+        if (widthMode != MeasureSpec.EXACTLY) {
+            int widthSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 50, displayMetrics);
             widthMeasureSpec = MeasureSpec.makeMeasureSpec(widthSize, MeasureSpec.EXACTLY);
         }
-
-        if(heightMode != MeasureSpec.EXACTLY){
-            heightSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 30, displayMetrics);
+        if (heightMode != MeasureSpec.EXACTLY) {
+            int heightSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 30, displayMetrics);
             heightMeasureSpec = MeasureSpec.makeMeasureSpec(heightSize, MeasureSpec.EXACTLY);
         }
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
         initPath();
     }
 
     @Override
     public void setChecked(boolean checked) {
         super.setChecked(checked);
-        boolean isChecked = isChecked();
+        if (backgroundPaint != null) {
+            backgroundPaint.setColor(checked ? color_on : color_off);
+        }
         if (toggleDrawPath != null) {
             toggleDrawPath.reset();
-            toggleDrawPath.set(isChecked?togglePath_on : togglePath_off);
+            toggleDrawPath.set(checked ? togglePath_on : togglePath_off);
         }
         invalidate();
     }
+
 }
